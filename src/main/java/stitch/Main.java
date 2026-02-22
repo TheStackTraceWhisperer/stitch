@@ -1,0 +1,99 @@
+package stitch;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.*;
+
+public class Main {
+  private static final String VERSION = "0.0.1";
+
+  public static void main(String[] args) {
+    if (args.length == 0) {
+      printHelp();
+      return;
+    }
+
+    String input = args[0];
+    if (input.endsWith(".java")) {
+      runBuildScript(input);
+      return;
+    }
+
+    switch (input.toLowerCase()) {
+      case "init" -> initProject();
+      case "version", "-v" -> System.out.println("Stitch Build System v" + VERSION);
+      default -> printHelp();
+    }
+  }
+
+  private static void runBuildScript(String scriptPath) {
+    try {
+      Path path = Paths.get(scriptPath);
+      if (!Files.exists(path)) {
+        System.err.println("❌ Build script not found: " + scriptPath);
+        return;
+      }
+
+      // Find the literal physical location of the JAR file currently running this class
+      String jarPath = Main.class.getProtectionDomain()
+        .getCodeSource()
+        .getLocation()
+        .toURI()
+        .getPath();
+
+      ProcessBuilder pb = new ProcessBuilder(
+        "java",
+        "--enable-preview",
+        "--source", "25",
+        "-cp", jarPath, // Use the absolute path to THIS jar
+        scriptPath
+      ).inheritIO();
+
+      int result = pb.start().waitFor();
+      if (result != 0) {
+        System.exit(result);
+      }
+    } catch (Exception e) {
+      System.err.println("❌ Error executing build script: " + e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
+  private static void printHelp() {
+    System.out.println("🧵 Stitch Build System - v" + VERSION);
+    System.out.println("Usage: ./stitchw.java [script.java | command]");
+    System.out.println("Commands: init, version");
+  }
+
+  private static void initProject() {
+    try {
+      Path root = Paths.get("").toAbsolutePath();
+      Files.createDirectories(root.resolve("src/main/java/com/example"));
+      Files.createDirectories(root.resolve("src/main/resources"));
+
+      Files.writeString(root.resolve("src/main/java/module-info.java"),
+        "module com.example {\n}\n");
+
+      Files.writeString(root.resolve("stitch.java"), """
+        import stitch.Workspace;
+        
+        void main() {
+            Workspace.init("my-app")
+                .project("app")
+                .mainClass("com.example.Main")
+                .execute();
+        }
+        """);
+
+      // If you ever generate stitchw.java in the init step, make it executable
+      Path wrapper = root.resolve("stitchw.java");
+      if (Files.exists(wrapper)) {
+        wrapper.toFile().setExecutable(true);
+      }
+
+      System.out.println("✅ Project initialized with Maven layout.");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+}
