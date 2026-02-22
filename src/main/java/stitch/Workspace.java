@@ -67,7 +67,8 @@ public class Workspace {
         projectName,
         sourceDir,
         Optional.ofNullable(moduleName),
-        Optional.ofNullable(mainClass)
+        Optional.ofNullable(mainClass),
+        workspace.moduleMappings
       ));
       workspace.execute();
       return workspace;

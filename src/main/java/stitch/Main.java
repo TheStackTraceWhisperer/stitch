@@ -1,8 +1,9 @@
 package stitch;
 
+import stitch.util.Logger;
+
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.*;
 
 public class Main {
   private static final String VERSION = "0.0.1";
@@ -21,7 +22,7 @@ public class Main {
 
     switch (input.toLowerCase()) {
       case "init" -> initProject();
-      case "version", "-v" -> System.out.println("Stitch Build System v" + VERSION);
+      case "version", "-v" -> Logger.info("Stitch Build System v" + VERSION);
       default -> printHelp();
     }
   }
@@ -30,7 +31,7 @@ public class Main {
     try {
       Path path = Paths.get(scriptPath);
       if (!Files.exists(path)) {
-        System.err.println("❌ Build script not found: " + scriptPath);
+        Logger.error("❌ Build script not found: " + scriptPath);
         return;
       }
 
@@ -54,15 +55,14 @@ public class Main {
         System.exit(result);
       }
     } catch (Exception e) {
-      System.err.println("❌ Error executing build script: " + e.getMessage());
-      e.printStackTrace();
+      Logger.error("❌ Error executing build script: " + e.getMessage(), e);
     }
   }
 
   private static void printHelp() {
-    System.out.println("🧵 Stitch Build System - v" + VERSION);
-    System.out.println("Usage: ./stitchw.java [script.java | command]");
-    System.out.println("Commands: init, version");
+    Logger.info("🧵 Stitch Build System - v" + VERSION);
+    Logger.info("Usage: ./stitchw.java [script.java | command]");
+    Logger.info("Commands: init, version");
   }
 
   private static void initProject() {
@@ -91,9 +91,9 @@ public class Main {
         wrapper.toFile().setExecutable(true);
       }
 
-      System.out.println("✅ Project initialized with Maven layout.");
+      Logger.info("✅ Project initialized with Maven layout.");
     } catch (IOException e) {
-      e.printStackTrace();
+      Logger.error("❌ Failed to initialize project.", e);
     }
   }
 }

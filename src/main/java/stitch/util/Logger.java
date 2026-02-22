@@ -20,8 +20,12 @@ public final class Logger {
             continue;
           }
           LogMessage msg = QUEUE.take();
-          if (msg.isError()) System.err.println(msg.text());
-          else System.out.println(msg.text());
+          if (msg.isError()) {
+            System.err.println(msg.text());
+            if (msg.cause() != null) msg.cause().printStackTrace();
+          } else {
+            System.out.println(msg.text());
+          }
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -29,6 +33,18 @@ public final class Logger {
     });
     PRINTER_THREAD.setDaemon(true);
     PRINTER_THREAD.start();
+  }
+
+  public static void info(String message) {
+    QUEUE.offer(new LogMessage(message, false, null));
+  }
+
+  public static void error(String message) {
+    QUEUE.offer(new LogMessage(message, true, null));
+  }
+
+  public static void error(String message, Throwable cause) {
+    QUEUE.offer(new LogMessage(message, true, cause));
   }
 
   public static void startProgress() {
@@ -56,7 +72,6 @@ public final class Logger {
     System.out.print("\r⏳ Resolving modules... [" + done + " / " + total + " traversed]");
   }
 
-  private record LogMessage(String text, boolean isError) {
+  private record LogMessage(String text, boolean isError, Throwable cause) {
   }
 }
-

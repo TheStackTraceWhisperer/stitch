@@ -11,7 +11,7 @@ mvn clean verify && \
   ./stitchw.java && \
   mv ./target/.stitch/stitch.jar ./target/.stitch/stitch-maven.jar && \
   cp ./target/stitch-build-system.jar ./target/.stitch/stitch.jar && \
-  ./stitchw.java &&
+  ./stitchw.java
 ```
 
 
