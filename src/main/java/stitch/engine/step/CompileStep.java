@@ -4,6 +4,7 @@ import stitch.domain.*;
 import stitch.util.Logger;
 
 import javax.tools.*;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
@@ -23,11 +24,19 @@ public class CompileStep implements BuildStep {
             Path outputDir = classesRoot.resolve(config.projectName());
             Files.createDirectories(outputDir);
 
+            // Build the module path string. Start with local classes.
+            StringBuilder modulePathBuilder = new StringBuilder(classesRoot.toAbsolutePath().toString());
+
+            // Append every resolved stitched dependency
+            for (Path jar : context.resolvedDependencies()) {
+                modulePathBuilder.append(File.pathSeparator).append(jar.toAbsolutePath().toString());
+            }
+
             List<String> options = List.of(
                 "--enable-preview", "--release", "25",
                 "-d", outputDir.toString(),
                 "--module-source-path", context.module().name().value() + "=" + config.sourceDir().toString(),
-                "--module-path", classesRoot.toString()
+                "--module-path", modulePathBuilder.toString()
             );
 
             List<Path> sources = Files.walk(config.sourceDir()).filter(p -> p.toString().endsWith(".java")).toList();

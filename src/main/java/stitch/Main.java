@@ -11,6 +11,7 @@ public class Main {
   public static void main(String[] args) {
     if (args.length == 0) {
       printHelp();
+      Logger.flush();
       return;
     }
 
@@ -25,6 +26,7 @@ public class Main {
       case "version", "-v" -> Logger.info("Stitch Build System v" + VERSION);
       default -> printHelp();
     }
+    Logger.flush();
   }
 
   private static void runBuildScript(String scriptPath) {
@@ -32,6 +34,7 @@ public class Main {
       Path path = Paths.get(scriptPath);
       if (!Files.exists(path)) {
         Logger.error("❌ Build script not found: " + scriptPath);
+        Logger.flush();
         return;
       }
 
@@ -51,11 +54,13 @@ public class Main {
       ).inheritIO();
 
       int result = pb.start().waitFor();
+      Logger.flush();
       if (result != 0) {
         System.exit(result);
       }
     } catch (Exception e) {
       Logger.error("❌ Error executing build script: " + e.getMessage(), e);
+      Logger.flush();
     }
   }
 

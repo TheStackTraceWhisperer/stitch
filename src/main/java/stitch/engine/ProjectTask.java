@@ -16,6 +16,7 @@ public class ProjectTask implements Runnable {
         this.graph = graph;
         this.pipeline = List.of(
             new ParseModuleStep(),
+            new FetchDependenciesStep(),
             new AwaitDependenciesStep(graph),
             new CompileStep(),
             new CopyResourcesStep(),

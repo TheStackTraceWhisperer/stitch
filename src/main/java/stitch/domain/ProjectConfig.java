@@ -9,7 +9,7 @@ public record ProjectConfig(
   Path sourceDir,
   Optional<String> moduleNameOverride,
   Optional<String> mainClass,
-  Map<String, String> moduleMappings
+  Map<String, String> stitchedModules
 ) {
   public ProjectConfig {
     if (projectName == null || projectName.isBlank()) {
@@ -18,6 +18,6 @@ public record ProjectConfig(
     if (sourceDir == null) {
       throw new ModuleResolutionException("Source directory cannot be null.");
     }
-    moduleMappings = moduleMappings == null ? Map.of() : Map.copyOf(moduleMappings);
+    stitchedModules = stitchedModules == null ? Map.of() : Map.copyOf(stitchedModules);
   }
 }

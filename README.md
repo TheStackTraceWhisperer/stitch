@@ -1,103 +1,130 @@
 # Stitch Build System
-A modern Java build system leveraging JPMS modules, domain-driven design, and incremental compilation.
 
-## Bootstrapping Stitch
+A **JPMS-native** build system for Java 25+. Stitch leverages the Module System to provide deterministic builds without XML.
 
-```shell
-mvn clean verify && \
-  mkdir -p target/.stitch && \
-  cp ./target/stitch-0.0.1.jar ./target/.stitch/stitch.jar && \
-  find ./target/* -maxdepth 1 ! -name '.stitch' ! -name '.' -exec rm -rf {} + && \
-  ./stitchw.java && \
-  mv ./target/.stitch/stitch.jar ./target/.stitch/stitch-maven.jar && \
-  cp ./target/stitch-build-system.jar ./target/.stitch/stitch.jar && \
-  ./stitchw.java
-```
+## 🚀 Features
 
+- **Dependency Stitching**: Declare external Maven dependencies directly in your build script. Stitch resolves specific JARs and manages the module graph.
+- **Automated Launch**: Automatically generates an executable launcher script (`./target/app`) that handles the `module-path` setup.
+- **Self-Hosting**: Stitch builds itself.
+- **Configuration as Code**: Build scripts are valid, runnable Java programs (`stitch.java`).
 
-## Features
-✨ **JPMS Module System** - Native module support with `module-info.java`  
-🚀 **Module-Aware Resolution** - Intelligent dependency graph traversal  
-🔄 **BOM Support** - Import Spring Boot, Quarkus, and other BOMs  
-📦 **Incremental Compilation** - Only recompile changed files  
-🎯 **Clean Architecture** - Immutable domain models and functional design  
-⚡ **Fast Builds** - Staleness detection and parallel resolution
-## Quick Start
-### Installation
+## 🛠️ Bootstrapping Stitch
+
+Stitch builds itself. To get started from source:
+
 ```bash
-java -jar stitch-0.0.1.jar init
+# 1. Provide the initial build using Maven
+# 2. Use the result to rebuild Stitch using Stitch (Self-Hosting)
+./bootstrap-build.sh
 ```
-This creates:
-- `src/module-info.java` - Module descriptor
-- `build.java` - Build configuration
-- `stitch.java` - Bootstrap wrapper
-### Build Configuration
-Create a `build.java` file:
+
+This will produce the finalized build engine in `target/.stitch/stitch.jar`.
+
+## 📖 Getting Started
+
+### 1. Project Structure
+Stitch follows standard Maven conventions but uses a simpler configuration:
+
+```
+my-project/
+├── src/main/java/
+│   ├── module-info.java
+│   └── com/example/app/Main.java
+├── stitch.java      <-- The Build Script
+└── stitchw.java     <-- The Wrapper
+```
+
+### 2. The Build Script (`stitch.java`)
+Configure your workspace using the Java DSL:
+
 ```java
 import stitch.Workspace;
+
 void main() {
-    Workspace.init("my-app")
-        .mapModule("gson", "com.google.code.gson:gson:2.10.1")
+    Workspace.init("my-workspace")
+        // Stitch external dependencies from Maven Central
+        .stitch("com.google.gson", "com.google.code.gson:gson:2.10.1")
+        
+        // Define your project
         .project("app")
-            .moduleName("com.example.myapp")
-            .mainClass("com.example.Main")
-            .requiresModule("gson")
+            .moduleName("com.example.app")
+            .mainClass("com.example.app.Main")
             .execute();
 }
 ```
-### Run the Build
-```bash
-# Using JEP 330 source-file execution
-java --source 25 --enable-preview build.java
-# Or compile first
-javac --enable-preview --source 25 build.java
-java --enable-preview build
-```
-### Run Your Application
-```bash
-java -p target/modules:target/my-app.jar -m com.example.myapp
-```
 
-## Examples
-
-See the `examples/` directory for complete working projects:
-
-- **hello-gson** - Simple JSON serialization with Gson
-- **simple-text** - Text processing with Apache Commons (demonstrates transitive dependencies)
-
-Each example is self-contained with:
-- `stitchw.java` - Bootstrap wrapper (auto-downloads Stitch)
-- `stitch.java` - Build script
-- `src/main/java/` - Standard Maven layout
+### 3. Running the Build
+Use the wrapper script to build your project. It automatically downloads the Stitch bootstrapper if needed.
 
 ```bash
-cd examples/hello-gson
-./stitch.java
-java --enable-preview -p target/modules:target/hello-gson.jar -m com.example.hello
+./stitchw.java
 ```
 
-## Requirements
+**Output:**
+```
+🚀 Starting Stitch build engine with 1 projects...
+🧵 [app] Starting task...
+✅ Found cached dependency: gson-2.10.1.jar
+⏳ [app] Awaiting dependencies: [com.google.gson]
+🔨 [app] Compiling...
+📦 [app] Created JAR: target/app.jar
+📚 [app] Copied dependencies to: target/lib
+🚀 Run your app effortlessly with: ./target/app
+✅ [app] Finished.
+🏁 Build process completed.
+```
 
-- **JDK 25+** with preview features enabled
-- **Maven 3.8+** (for building Stitch itself)
+### 4. Running Your App
+Stitch generates a launcher script to run modular applications:
 
-## Cache Location
-
-Dependencies are cached per-project in `.stitch/cache/`
-
-Benefits:
-- **Project isolation** - Each project has its own dependency cache
-- **Reproducible builds** - No global state pollution
-- **Easy cleanup** - Just delete `.stitch/` directory
-- **Version control** - Add `.stitch/` to `.gitignore`
-
-## Building Stitch
 ```bash
-mvn clean package
+./target/app
 ```
-Output: `target/stitch-0.0.1.jar`
-## Documentation
-See [ARCHITECTURE.md](ARCHITECTURE.md) for complete technical documentation.
+
+This avoids manual `java -p ... -m ...` commands.
+
+## 🧩 Dependency Management
+
+Stitch doesn't use `pom.xml`. Instead, you "stitch" external artifacts into your workspace map.
+
+1.  **Declare** the mapping in `stitch.java`:
+    ```java
+    .stitch("com.google.gson", "com.google.code.gson:gson:2.10.1")
+    ```
+2.  **Require** it in `module-info.java`:
+    ```java
+    module com.example.app {
+        requires com.google.gson; 
+    }
+    ```
+
+Stitch will automatically:
+1.  Check strictly named modules.
+2.  Download the JAR from Maven Central.
+3.  Cache it in `.stitch/cache`.
+4.  Add it to the compiler's module path.
+5.  Bundle it into `target/lib` for runtime execution.
+
+## 📋 Requirements
+
+- **JDK 25** (Preview features enabled)
+- Linux/macOS (Windows support planned)
+
+## 🏗️ Architecture
+
+Stitch is built on a **Concurrent Pipeline** model. Each project is a task submitted to a virtual thread pool.
+
+**Build Pipeline:**
+1.  **ParseModuleStep**: Reads `module-info.java`.
+2.  **FetchDependenciesStep**: Resolves "stitched" JARs from Maven Central.
+3.  **AwaitDependenciesStep**: Blocking wait for inter-project dependencies in the graph.
+4.  **CompileStep**: Invokes `javax.tools.JavaCompiler`.
+5.  **CopyResourcesStep**: Copies non-Java assets.
+6.  **PackageJarStep**: Creates the JAR and the Launch Script.
+
+---
+*Stitch is currently in active development / alpha.*
 ## License
 MIT License
 ---

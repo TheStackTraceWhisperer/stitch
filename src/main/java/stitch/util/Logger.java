@@ -47,6 +47,17 @@ public final class Logger {
     QUEUE.offer(new LogMessage(message, true, cause));
   }
 
+  public static void flush() {
+    while (!QUEUE.isEmpty()) {
+      try {
+        Thread.sleep(10); // Yield to the printer thread to let it catch up
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        break;
+      }
+    }
+  }
+
   public static void startProgress() {
     trackingProgress = true;
     pendingTasks.set(0);

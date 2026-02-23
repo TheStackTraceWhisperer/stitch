@@ -10,7 +10,7 @@ import java.util.Optional;
 public class Workspace {
   private final String name;
   private final Map<String, ProjectConfig> projects = new HashMap<>();
-  private final Map<String, String> moduleMappings = new HashMap<>(); // Store Maven coordinates
+  private final Map<String, String> stitchedModules = new HashMap<>(); // Store Maven coordinates
 
   private Workspace(String name) {
     this.name = name;
@@ -20,8 +20,8 @@ public class Workspace {
     return new Workspace(name);
   }
 
-  public Workspace mapModule(String moduleName, String coordinates) {
-    this.moduleMappings.put(moduleName, coordinates);
+  public Workspace stitch(String moduleName, String coordinates) {
+    this.stitchedModules.put(moduleName, coordinates);
     return this;
   }
 
@@ -68,7 +68,7 @@ public class Workspace {
         sourceDir,
         Optional.ofNullable(moduleName),
         Optional.ofNullable(mainClass),
-        workspace.moduleMappings
+        workspace.stitchedModules
       ));
       workspace.execute();
       return workspace;
