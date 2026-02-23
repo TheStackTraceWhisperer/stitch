@@ -6,8 +6,7 @@ import java.net.http.*;
 import java.nio.file.*;
 
 final String STITCH_VERSION = "0.0.1";
-final String DEFAULT_MAVEN_REPO = "https://repo1.maven.org/maven2";
-final String ARTIFACT_PATH = "/io/github/stitch/stitch/" + STITCH_VERSION + "/stitch-" + STITCH_VERSION + ".jar";
+final String GITHUB_RELEASES_URL = "https://github.com/TheStackTraceWhisperer/stitch/releases/download/v" + STITCH_VERSION + "/stitch.jar";
 
 void main(String[] args) throws Exception {
     Path stitchJar = locateStitchJar();
@@ -27,14 +26,13 @@ void fetchStitchJarIfNotFound(Path stitchJar) throws IOException, InterruptedExc
     Path home = stitchJar.getParent();
     if (home != null) Files.createDirectories(home);
 
-    String repo = System.getProperty("STITCH_MAVEN_REPOSITORY", DEFAULT_MAVEN_REPO);
-    URI downloadUrl = URI.create(repo + ARTIFACT_PATH);
+    String downloadUrl = System.getProperty("STITCH_DOWNLOAD_URL", GITHUB_RELEASES_URL);
 
     HttpClient client = HttpClient.newBuilder()
       .followRedirects(HttpClient.Redirect.NORMAL)
       .build();
 
-    HttpRequest request = HttpRequest.newBuilder(downloadUrl).GET().build();
+    HttpRequest request = HttpRequest.newBuilder(URI.create(downloadUrl)).GET().build();
     HttpResponse<Path> response = client.send(request, HttpResponse.BodyHandlers.ofFile(stitchJar));
 
     if (response.statusCode() != 200) {
